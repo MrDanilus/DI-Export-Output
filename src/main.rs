@@ -1,11 +1,14 @@
-use core::App;
+use freya::prelude::*;
 
 mod core;
 mod ui;
+use ui::view;
 
 fn main() {
-    let app = iced::application("SD Image 2 Params", App::update, App::view)
-        .window_size(iced::Size::from((800.0, 700.0)))
-        .subscription(App::subscription);
-    app.run().unwrap();
+    launch_cfg(
+        view,
+        LaunchConfig::<()>::new()
+            .with_size(800.0, 700.0)
+            .with_title("SD Image 2 Params")
+    );
 }

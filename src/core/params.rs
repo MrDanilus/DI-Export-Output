@@ -25,16 +25,20 @@ pub struct Params{
 }
 impl fmt::Display for Params {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let params = format!(
+        let mut params = format!(
             "➕: {}\n➖: {}\n\
             - 👣: {}; 🖌️: {}; 📏: {}\n\
-            - 🎨: {}; 🎨💾: {}\n\
-            - 🔤: {}; 🔤💾: {}",
-            self.pos_prompt, self.neg_prompt,
+            - 🎨: {}; 🎨💾: {}",
+            self.pos_prompt.trim(), self.neg_prompt.trim(),
             self.steps, self.sampler, self.size,
-            self.model, self.model_hash,
-            self.vae, self.vae_hash
+            self.model, self.model_hash
         );
+        if self.vae.len() > 1{
+            params.push_str(format!(
+                "\n- 🔤: {}; 🔤💾: {}",
+                self.vae, self.vae_hash
+            ).as_str());
+        };
 
         let mut loras = Vec::new();
         for lora in &self.loras{
