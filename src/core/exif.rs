@@ -1,8 +1,8 @@
 use std::{fs, path::PathBuf};
 
-use crate::core::params::Params;
+use crate::core::{civitai::get_all, params::Params};
 
-pub fn parse_image(path: &PathBuf) -> Result<String, String>{
+pub fn parse_image(path: &PathBuf, civitai_value: bool) -> Result<String, String>{
     let mut res = Params::default();
     let file = fs::read(path).map_err(|e| format!("Ошибка чтения файла: {e}"))?;
 
@@ -59,9 +59,7 @@ pub fn parse_image(path: &PathBuf) -> Result<String, String>{
             p if p.starts_with("Clip skip:") ||
                 p.starts_with("Schedule type:") ||
                 p.starts_with("Version:") => {}
-            p => {
-                println!("Unused: {p}");
-            }
+            p => {}
         }
     }
 
@@ -77,8 +75,26 @@ pub fn parse_image(path: &PathBuf) -> Result<String, String>{
                 .unwrap_or_default();
             let lora_hash = lora_split.next()
                 .unwrap_or_default();
-            res.loras.push((lora.to_string(), lora_hash.to_string()));
+            res.loras.push((lora.to_string(), lora_hash.to_string(), String::new()));
         }
+    }
+
+    // Civitai requester
+    if civitai_value{
+        let req_loras = res.loras.iter().map(|lora|
+            lora.1.to_owned()
+        ).collect::<Vec<_>>();
+        if let Ok(civit_ai) = get_all(&res.model_hash, &res.vae_hash, &req_loras){
+            res.model_url = civit_ai.model_url;
+            res.vae_url = civit_ai.vae_url;
+            let def = (String::new(), String::new());
+            for lora in res.loras.iter_mut(){
+                let lora_url = civit_ai.loras_urls.iter().filter(|v| *v.0 == lora.1)
+                    .next().unwrap_or(&def);
+                lora.2 = lora_url.1.clone();
+
+            }
+        };
     }
 
     Ok(res.to_string())

@@ -1,3 +1,4 @@
 pub mod file;
 pub mod exif;
-mod params;
+pub mod params;
+pub mod civitai;

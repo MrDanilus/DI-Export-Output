@@ -1,8 +1,10 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 use freya::prelude::*;
 
 mod core;
 mod ui;
 use ui::view;
+mod assets;
 
 fn main() {
     launch_cfg(
