@@ -26,13 +26,23 @@ pub struct Params{
 impl fmt::Display for Params {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut params = format!(
-            "➕: {}\n➖: {}\n\
-            - 👣: {}; 🖌️: {}; 📏: {}\n\
+            "➕: {}\n",
+            self.pos_prompt.trim()
+        );
+
+        if self.neg_prompt.trim().len() > 1{
+            params.push_str(format!(
+                "➖: {}\n",
+                self.neg_prompt.trim()
+            ).as_str());
+        };
+        params.push_str(format!(
+            "- 👣: {}; 🖌️: {}; 📏: {}\n\
             - 🎨: {}; 🎨💾: {}",
-            self.pos_prompt.trim(), self.neg_prompt.trim(),
             self.steps, self.sampler, self.size,
             self.model, self.model_hash
-        );
+        ).as_str());
+
         if self.vae.len() > 1{
             params.push_str(format!(
                 "\n- 🔤: {}; 🔤💾: {}",

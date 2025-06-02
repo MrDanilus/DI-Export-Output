@@ -3568,8 +3568,10 @@ dependencies = [
 name = "sd-image-to-params"
 version = "0.1.0"
 dependencies = [
+ "copypasta",
  "freya",
  "image",
+ "walkdir",
 ]
 
 [[package]]

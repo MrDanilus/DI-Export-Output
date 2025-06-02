@@ -13,7 +13,7 @@ pub fn parse_image(path: &PathBuf) -> Result<String, String>{
         .ok_or(format!("Не удалось найти данные"))?;
     let params = String::from_utf8(clean_text_bytes(raw_params.as_bytes()))
         .map_err(|e| format!("Ошибка чистки байтов: {e}"))?;
-
+    
     // Get prompts
     let params_clone = params.clone();
     let prompts_split = params_clone.split("Steps:").nth(0)
@@ -23,7 +23,7 @@ pub fn parse_image(path: &PathBuf) -> Result<String, String>{
         .ok_or(format!("Не удалось найти позитивный промпт"))?
         .to_string();
     res.neg_prompt = prompts_split.next()
-        .ok_or(format!("Не удалось найти негативный промпт"))?
+        .unwrap_or_default()
         .to_string();
 
     // Get params

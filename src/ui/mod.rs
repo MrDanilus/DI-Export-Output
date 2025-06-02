@@ -1,7 +1,8 @@
 use std::{fs, path::PathBuf};
 use freya::prelude::*;
+use copypasta::{ClipboardContext, ClipboardProvider};
 
-use crate::{core::{exif, file::check_image}, ui::theme::button_transparent};
+use crate::{core::{exif, file::{check_file, write}}, ui::theme::button_transparent};
 
 mod theme;
 
@@ -24,22 +25,8 @@ pub fn view() -> Element{
 
     let mut selected_file = use_signal(|| None);
     let mut metadata = use_signal(|| Exif::None);
-
-    const CHECK_FILE: fn(Signal<Vec<PathBuf>>, Event<FileData>) -> DnDStatus = |files, file| {
-        let path = match &file.file_path{
-            Some(path) => path,
-            None => {
-                return DnDStatus::Wrong;
-            }
-        };
-        if files.read().contains(path){
-            return DnDStatus::Exists;
-        }
-        match check_image(path){
-            true => DnDStatus::Ok,
-            false => DnDStatus::Wrong
-        }
-    };
+    
+    let mut show_popup = use_signal(|| false);
 
     rsx!(
     rect{
@@ -51,28 +38,12 @@ pub fn view() -> Element{
 
         padding: "8",
 
-        onglobalfilehover: move |file| {
-            file_hover.set(CHECK_FILE(files, file));
-        },
+        onglobalfilehover: move |file| 
+            file_hover.set(check_file(files, file)),
         onglobalfilehovercancelled: move |_| 
             file_hover.set(DnDStatus::None),
-        onfiledrop: move |file| {
-            let file_clone = file.clone();
-            let path = match &file_clone.file_path{
-                Some(path) => path,
-                None => {
-                    file_hover.set(DnDStatus::Wrong);
-                    return;
-                }
-            };
-            match CHECK_FILE(files, file){
-                DnDStatus::Ok => {
-                    file_hover.set(DnDStatus::None);
-                    files.write().push(path.clone());
-                },
-                status => file_hover.set(status)
-            }
-        },
+        onfiledrop: move |file| 
+            write(&mut files, &mut file_hover, file),
 
         rect { 
             direction: "horizontal",
@@ -80,41 +51,103 @@ pub fn view() -> Element{
             width: "fill",
 
             rect {
-                border: "1 inner white",
+                direction: "vertical",
                 height: "fill",
                 width: "50%",
                 main_align: "center",
                 cross_align: "center",
+                
+                rect {  
+                    direction: "horizontal",
+                    width: "fill",
+                    content: "flex",
+                    padding: "4",
+                    spacing: "4",
 
-                background: {match *file_hover.read(){
-                    DnDStatus::Ok => "#022e00",
-                    DnDStatus::Wrong => "#2e0000",
-                    DnDStatus::Exists => "#2e2d00",
-                    _ => "black"
-                }},
-
-                if files.read().is_empty(){
-                    label { 
-                        text_align: "center",
-                        color: {match *file_hover.read(){
-                            DnDStatus::Ok => "green",
-                            DnDStatus::Wrong => "red",
-                            DnDStatus::Exists => "yellow",
-                            _ => "white"
-                        }},
-                        "Переместите изображения/директорию\nв окно"
+                    Button{
+                        theme: Some(button_transparent("#6e6e6e")),
+                        onpress: move |_| {
+                            selected_file.set(None);
+                            metadata.set(Exif::None);
+                            files.write().clear()
+                        },
+                        rect{
+                            direction: "horizontal",
+                            main_align: "center",
+                            width: "50%",
+                            height: "fill-min",
+                            label{
+                                "🗑️"
+                            }
+                        }
+                    },
+                    Button{
+                        theme: Some(button_transparent("#6e6e6e")),
+                        onpress: move |_| {
+                            let mut params = Vec::new();
+                            for file in &files.read().clone(){
+                                match exif::parse_image(&file){
+                                    Ok(res) => params.push(
+                                        format!("[{file:?}]\n{}", res)
+                                    ),
+                                    Err(_) => {},
+                                }
+                            }
+                            let res = if params.is_empty(){
+                                "Нет параметров".to_string()
+                            } else{
+                                params.join("\n---\n")
+                            };
+                            let mut ctx = ClipboardContext::new().unwrap();
+                            ctx.set_contents(res).unwrap();
+                            show_popup.set(true);
+                        },
+                        rect{
+                            direction: "horizontal",
+                            main_align: "center",
+                            width: "fill",
+                            height: "fill-min",
+                            label{
+                                "📲"
+                            }
+                        }
                     }
-                } else{
-                    ScrollView {
-                        padding: "8",
-                        direction: "vertical",
-                        for file in files.read().clone(){
-                        {
-                            let file_clone = file.clone();
-                            let file_name = file_clone.file_name().unwrap().to_str().unwrap();
-                            let file_clone = file.clone();
-                            rsx!(
-                                rect{
+                },
+                
+                rect{
+                    border: "1 inner white",
+                    height: "fill",
+                    width: "fill",
+                    main_align: "center",
+                    cross_align: "center",
+
+                    background: {match *file_hover.read(){
+                        DnDStatus::Ok => "#022e00",
+                        DnDStatus::Wrong => "#2e0000",
+                        DnDStatus::Exists => "#2e2d00",
+                        _ => "black"
+                    }},
+
+                    if files.read().is_empty(){
+                        label { 
+                            text_align: "center",
+                            color: {match *file_hover.read(){
+                                DnDStatus::Ok => "green",
+                                DnDStatus::Wrong => "red",
+                                DnDStatus::Exists => "yellow",
+                                _ => "white"
+                            }},
+                            "Переместите изображения/директорию\nв окно"
+                        }
+                    } else{
+                        ScrollView {
+                            padding: "8",
+                            direction: "vertical",
+                            for file in files.read().clone(){{
+                                let file_clone = file.clone();
+                                let file_name = file_clone.file_name().unwrap().to_str().unwrap();
+                                let file_clone = file.clone();
+                                rsx!(rect{
                                     direction: "horizontal",
                                     width: "fill",
 
@@ -147,9 +180,8 @@ pub fn view() -> Element{
                                             { file_name }
                                         }
                                     }
-                                }
-                            )
-                        }
+                                })
+                            }}
                         }
                     }
                 }
@@ -217,6 +249,18 @@ pub fn view() -> Element{
                 }),
                 Exif::None => rsx!()
             }}
+        },
+        if *show_popup.read() {
+            Popup {
+                oncloserequest: move |_| {
+                    show_popup.set(false)
+                },
+                PopupTitle {
+                    label {
+                        "Параметры сохранены в буфер обмена ✅"
+                    }
+                }
+            }
         }
     }
     )
