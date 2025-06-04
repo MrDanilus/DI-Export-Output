@@ -3,7 +3,7 @@ use freya::{events::FileData, prelude::{Event, Readable, Signal, Writable}};
 use image::ImageReader;
 use walkdir::WalkDir;
 
-use crate::ui::DnDStatus;
+use crate::ui::app::DnDStatus;
 
 pub fn check_file(files: Signal<Vec<PathBuf>>, file: Event<FileData>) -> DnDStatus{
     let path = match &file.file_path{

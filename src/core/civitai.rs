@@ -1,5 +1,5 @@
 use serde_json::Value;
-use ureq::Agent;
+use reqwest::{Client, ClientBuilder};
 
 #[derive(Default)]
 pub struct CivitAI{
@@ -8,22 +8,23 @@ pub struct CivitAI{
     pub loras_urls: Vec<(String, String)>
 }
 
-pub fn get_all(model: &String, vae: &String, loras: &Vec<String>) -> Result<CivitAI, ()>{
+pub async fn get_all(model: &String, vae: &String, loras: &Vec<String>) -> Result<CivitAI, ()>{
     let mut res = CivitAI::default();
 
-    let agent = ureq::agent();
-    res.model_url = match get_by_hash(model, &agent){
+    let client = ClientBuilder::new()
+        .build().map_err(|_| ())?;
+    res.model_url = match get_by_hash(model, &client).await{
         Ok(url) => url,
         Err(_) => "❌".to_string()
     };
     if !vae.is_empty(){
-        res.vae_url = match get_by_hash(vae, &agent){
+        res.vae_url = match get_by_hash(vae, &client).await{
             Ok(url) => url,
             Err(_) => "❌".to_string()
         };
     }
     for lora in loras{
-        res.loras_urls.push((lora.to_owned(), match get_by_hash(lora, &agent){
+        res.loras_urls.push((lora.to_owned(), match get_by_hash(lora, &client).await{
             Ok(url) => url,
             Err(_) => "❌".to_string()
         }));
@@ -31,18 +32,19 @@ pub fn get_all(model: &String, vae: &String, loras: &Vec<String>) -> Result<Civi
     Ok(res)
 }
 
-fn get_by_hash(hash: &String, agent: &Agent) -> Result<String, ()>{
-    let res = agent
+pub async fn get_by_hash(hash: &String, client: &Client) -> Result<String, ()>{
+    let res = client
         .get(format!("https://civitai.com/api/v1/model-versions/by-hash/{hash}"))
-        .call().map_err(|_| ())?
-        .body_mut()
-        .read_to_string().map_err(|_| ())?;
+        .send().await.map_err(|_| ())?
+        .text().await.map_err(|_| ())?;
 
     let json = serde_json::from_str::<Value>(&res)
         .map_err(|_| ())?;
     Ok(format!(
-        "https://civitai.com/models/{}",
+        "https://civitai.com/models/{}?modelVersionId={}",
         json.get("modelId").ok_or(())?
+        .as_i64().ok_or(())?,
+        json.get("id").ok_or(())?
         .as_i64().ok_or(())?
     ))
 }

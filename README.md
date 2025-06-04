@@ -1,5 +1,4 @@
 # TODO:
-- [ ] Get params with stream (asynchronously)
-- [ ] Optimize CivitAI requests in export parameters
+- [ ] Use VirtualScrollView instead ScrollView
 
 Readme soon

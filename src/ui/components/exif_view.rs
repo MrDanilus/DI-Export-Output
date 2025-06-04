@@ -1,6 +1,6 @@
 use freya::prelude::*;
 
-use crate::ui::Exif;
+use crate::ui::app::Exif;
 
 pub fn exif_view(
     metadata: Signal<Exif>
@@ -15,7 +15,6 @@ pub fn exif_view(
             }
         ),
         Exif::Err(err) => rsx!(rect{
-            color: "red",
             width: "fill",
             height: "fill",
 
@@ -23,6 +22,16 @@ pub fn exif_view(
             cross_align: "center",
             label{
                 {err}
+            }
+        }),
+        Exif::Loading => rsx!(rect{
+            width: "fill",
+            height: "fill",
+
+            main_align: "center",
+            cross_align: "center",
+            label{
+                "Загрузка..."
             }
         }),
         Exif::None => rsx!()

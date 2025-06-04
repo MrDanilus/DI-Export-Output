@@ -1,8 +1,4 @@
-use std::{fmt, path::PathBuf};
-
-use copypasta::{ClipboardContext, ClipboardProvider};
-
-use crate::core::exif;
+use std::fmt;
 
 #[derive(Default, Debug)]
 pub struct Params{
@@ -95,23 +91,4 @@ impl fmt::Display for Params {
             }
         )
     }
-}
-
-pub fn save_to_clipboard(files: Vec<PathBuf>, civitai_value: bool){
-    let mut params = Vec::new();
-    for file in files{
-        match exif::parse_image(&file, civitai_value){
-            Ok(res) => params.push(
-                format!("[{file:?}]\n{}", res)
-            ),
-            Err(_) => {},
-        }
-    }
-    let res = if params.is_empty(){
-        "Нет параметров".to_string()
-    } else{
-        params.join("\n---\n")
-    };
-    let mut ctx = ClipboardContext::new().unwrap();
-    ctx.set_contents(res).unwrap();
 }
