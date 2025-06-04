@@ -5,14 +5,13 @@ use freya::prelude::*;
 use crate::{assets::cross_icon, core::exif::{self, civitai_request}, ui::{app::{DnDStatus, Exif}, theme::button_transparent, THEME}};
 
 pub fn file_list(
-    mut selected_file: Signal<Option<PathBuf>>,
-    mut metadata:      Signal<Exif>,
-    mut files:         Signal<Vec<PathBuf>>,
+    selected_file: Signal<Option<PathBuf>>,
+    metadata:      Signal<Exif>,
+    files:         Signal<Vec<PathBuf>>,
 
     civitai_get:       Signal<bool>,
     file_hover:        Signal<DnDStatus>
 ) -> Element{
-    let civitai_value = *civitai_get.read();
     let theme_value = *THEME.read();
 
     rsx!(rect{
@@ -41,78 +40,124 @@ pub fn file_list(
                 }},
                 "Переместите изображения/директорию\nв окно"
             }
-        } else{
-            ScrollView {
-                padding: "8",
+        } else{{
+            let files_read = files.read();
+            let files_arr = files_read.clone().into_iter();
+            rsx!(VirtualScrollView {
                 direction: "vertical",
-                rect{
-                    direction: "vertical",
-                    spacing: "4",
+                padding: "8",
 
-                    for file in files.read().clone(){{
-                        let file_clone = file.clone();
-                        let file_name = file_clone.file_name().unwrap().to_str().unwrap();
-                        let file_clone = file.clone();
-                        rsx!(rect{
-                            direction: "horizontal",
-                            cross_align: "center",
-                            width: "fill",
+                length: files_arr.len(),
+                item_size: 33.0,
 
-                            Button{
-                                onpress: move |_| {
-                                    let mut selected_file = selected_file.write();
-                                    if selected_file.is_some() && 
-                                    file_clone == selected_file.clone().unwrap() {
-                                        *selected_file = None;
-                                        metadata.set(Exif::None);
-                                    }
-                                    files.write().retain(|f| *f != file_clone);
-                                },
-                                svg {
-                                    color: if theme_value == 1 {"#cccccc"} else {"#323232"},
-                                    width: "28",
-                                    height: "28",
-                                    svg_data: static_bytes(cross_icon())
-                                }
-                            },
-                            Button{
-                                theme: Some(button_transparent(
-                                    if theme_value == 1 {"#3b3938"} else {"#e4e0d9"}
-                                )),
-                                onpress: move |_| {
-                                    let file = file.clone();
-                                    if selected_file.read().is_some() &&
-                                    selected_file.read().clone().unwrap() == file{
-                                        return;
-                                    }
+                builder: move |i, _args: &Option<()>| {
+                    let mut files_arr = files_arr.clone();
+                    let file = files_arr.nth(i).unwrap();
+                    let file_name = file.file_name().unwrap().to_str().unwrap();
+                    rsx!(
+                        rect{
+                            key: "{i}",
+                            direction: "vertical",
+                            spacing: "4",
 
-                                    spawn(async move {
-                                        let mut selected_file = selected_file.clone();
-                                        metadata.set(Exif::Loading);
-
-                                        selected_file.set(Some(file.clone()));
-                                        metadata.set(match exif::parse_image(&file){
-                                            Ok(res) => Exif::Ok(if civitai_value{
-                                                civitai_request(res).await.to_string()
-                                            } else {res.to_string()}),
-                                            Err(err) => Exif::Err(err),
-                                        });
-                                    });
-                                },
-                                label {
-                                    width: "fill",
-                                    max_lines: "1",
-
-                                    color: if theme_value == 1 {"#cccccc"} else {"#323232"},
-                                    font_size: "16",
-                                    font_weight: "bold",
-                                    text_overflow: "ellipsis",
-                                    { file_name }
-                                }
-                            }
-                        })
-                    }}
+                            {file_element(
+                                selected_file, metadata, files, civitai_get, 
+                                file.clone(), file_name.to_string()
+                            )}
+                        }
+                    )
                 }
+            })
+            // rsx!(ScrollView {
+            //     padding: "8",
+            //     direction: "vertical",
+            //     rect{
+            //         direction: "vertical",
+            //         spacing: "4",
+
+            //         for file in files.read().clone(){{
+            //             let file_clone = file.clone();
+            //             let file_name = file_clone.file_name().unwrap().to_str().unwrap();
+            //             {file_element(
+            //                 selected_file, metadata, files, 
+            //                 file, file_name.to_string(), civitai_value, theme_value
+            //             )}
+            //         }}
+            //     }
+            // })
+        }}
+    })
+}
+
+fn file_element(
+    mut selected_file: Signal<Option<PathBuf>>,
+    mut metadata:      Signal<Exif>,
+    mut files:         Signal<Vec<PathBuf>>,
+    civitai_get: Signal<bool>,
+
+    file: PathBuf, 
+    file_name: String
+) -> Element{
+    let civitai_value = *civitai_get.read();
+    let theme_value = *THEME.read();
+    
+    let file_clone = file.clone();
+    rsx!(rect{
+        direction: "horizontal",
+        cross_align: "center",
+        width: "fill",
+        height: "32",
+
+        Button{
+            onpress: move |_| {
+                let mut selected_file = selected_file.write();
+                if selected_file.is_some() && 
+                file_clone == selected_file.clone().unwrap() {
+                    *selected_file = None;
+                    metadata.set(Exif::None);
+                }
+                files.write().retain(|f| *f != file_clone);
+            },
+            svg {
+                color: if theme_value == 1 {"#cccccc"} else {"#323232"},
+                width: "28",
+                height: "28",
+                svg_data: static_bytes(cross_icon())
+            }
+        },
+        Button{
+            theme: Some(button_transparent(
+                if theme_value == 1 {"#3b3938"} else {"#e4e0d9"}
+            )),
+            onpress: move |_| {
+                let file = file.clone();
+                if selected_file.read().is_some() &&
+                selected_file.read().clone().unwrap() == file{
+                    return;
+                }
+
+                spawn(async move {
+                    let mut selected_file = selected_file.clone();
+                    metadata.set(Exif::Loading);
+
+                    selected_file.set(Some(file.clone()));
+                    metadata.set(match exif::parse_image(&file){
+                        Ok(res) => Exif::Ok(if civitai_value{
+                            civitai_request(res).await.to_string()
+                        } else {res.to_string()}),
+                        Err(err) => Exif::Err(err),
+                    });
+                });
+            },
+            label {
+                width: "fill",
+                max_lines: "1",
+
+                color: if theme_value == 1 {"#cccccc"} else {"#323232"},
+                font_size: "16",
+                font_weight: "bold",
+                text_overflow: "ellipsis",
+                { file_name }
             }
         }
     })

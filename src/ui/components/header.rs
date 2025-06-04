@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use freya::prelude::*;
 
 use crate::{
-    assets::{civitai_logo, export_icon, loading_icon, moon_icon, sun_icon}, core::{config::write_theme, clipboard::save_to_clipboard}, ui::{
+    assets::{civitai_logo, export_icon, loading_icon, moon_icon, sun_icon, trash_icon}, core::{clipboard::save_to_clipboard, config::write_theme}, ui::{
         app::Exif, theme::button_transparent, THEME
     }
 };
@@ -86,8 +86,11 @@ pub fn header(
                 height: "fill-min",
 
                 padding: "4",
-                label{
-                    "🗑️"
+                svg{
+                    color: if theme_value == 1 {"#cccccc"} else {"#323232"},
+                    svg_data: static_bytes(trash_icon()),
+                    width: "32",
+                    height: "32"
                 }
             }
         },

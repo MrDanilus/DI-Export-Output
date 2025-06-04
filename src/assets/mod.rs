@@ -20,6 +20,9 @@ pub fn sun_icon() -> &'static [u8] {
 pub fn export_icon() -> &'static [u8]{
     include_bytes!("icons/export.svg")
 }
+pub fn trash_icon() -> &'static [u8]{
+    include_bytes!("icons/trash.svg")
+}
 
 // Fonts
 pub static JETBRAINS_REGULAR: &[u8] = include_bytes!("JetBrainsMono-Regular.ttf");
