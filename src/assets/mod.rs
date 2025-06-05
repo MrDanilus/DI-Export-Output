@@ -25,4 +25,4 @@ pub fn trash_icon() -> &'static [u8]{
 }
 
 // Fonts
-pub static JETBRAINS_REGULAR: &[u8] = include_bytes!("JetBrainsMono-Regular.ttf");
+pub static JETBRAINS_REGULAR: &[u8] = include_bytes!("fonts/JetBrainsMono-Regular.ttf");
