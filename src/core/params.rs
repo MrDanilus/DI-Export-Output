@@ -24,7 +24,7 @@ pub struct Params{
     pub forge_couple: bool,
 
     pub cfg_scale: String,
-    pub seed: String,
+    pub seed: String
 }
 impl fmt::Display for Params {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -41,11 +41,25 @@ impl fmt::Display for Params {
         };
         params.push_str(&format!(
             "- 👣: {}; 🖌️: {}; 📏: {}\n\
-            - 🎨: {}: <{}>",
+            - ⚖️: {}; 🌱: {}\n",
             self.steps, self.sampler, self.size,
-            self.model, self.model_hash
+            self.cfg_scale, self.seed
         ));
 
+        let mut additional = Vec::new();
+        if self.a_detailer{additional.push("🔎: ✅");}
+        if self.hi_res{additional.push("✨: ✅");}
+        if self.forge_couple{additional.push("🫂: ✅");}
+        if !additional.is_empty(){
+            params.push_str(&format!(
+                "- {}\n",
+                additional.join("; ")
+            ));
+        }
+
+        params.push_str(&format!(
+            "- 🎨: {}: [{}]", self.model, self.model_hash
+        ));
         if !self.model_url.is_empty(){
             params.push_str(&format!(
                 "; 🎨🔗: {}",
@@ -55,7 +69,7 @@ impl fmt::Display for Params {
 
         if !self.vae.is_empty(){
             let mut res_vae = format!(
-                "\n- 🔤: {}: <{}>",
+                "\n- 🔤: {}: [{}]",
                 self.vae, self.vae_hash
             );
             if !self.vae_url.is_empty(){
@@ -70,7 +84,7 @@ impl fmt::Display for Params {
         let mut loras = Vec::new();
         for lora in &self.loras{
             let mut res_lora = format!(
-                "- 📖: {}: <{}>",
+                "- 📖: {}: [{}]",
                 lora.0, lora.1
             );
             if !lora.2.is_empty(){
