@@ -26,7 +26,7 @@ pub fn app() -> Element{
     let mut file_hover = use_signal(|| DnDStatus::None);
     let mut files: Signal<Vec<PathBuf>> = use_signal(|| Vec::new());
 
-    let selected_file = use_signal(|| None);
+    let selected_file = use_signal(|| PathBuf::new());
     let civitai_request = use_signal(|| false);
     let metadata = use_signal(|| Exif::None);
 
@@ -82,7 +82,7 @@ pub fn app() -> Element{
                 color: if theme_value == 1 {"#cccccc"} else {"#323232"},
                 font_size: "20",
 
-                if selected_file.read().is_some(){
+                if selected_file.read().is_file(){
                     {preview(selected_file, metadata)}
                 } else if !files.read().is_empty(){ 
                     label { "Выберите изображение" } 

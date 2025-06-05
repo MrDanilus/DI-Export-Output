@@ -3571,6 +3571,7 @@ dependencies = [
  "copypasta",
  "freya",
  "image",
+ "open",
  "reqwest",
  "serde_json",
  "tokio",

@@ -10,7 +10,7 @@ use crate::{
 
 pub fn header(
     mut civitai_request: Signal<bool>,
-    mut selected_file:   Signal<Option<PathBuf>>,
+    mut selected_file:   Signal<PathBuf>,
     mut metadata:        Signal<Exif>,
     mut files:           Signal<Vec<PathBuf>>
 ) -> Element{
@@ -75,7 +75,7 @@ pub fn header(
                 if theme_value == 1 {"#3d3c3a"} else {"#e3dfd5"}
             )),
             onpress: move |_| {
-                selected_file.set(None);
+                selected_file.set(PathBuf::new());
                 metadata.set(Exif::None);
                 files.write().clear()
             },

@@ -2,10 +2,17 @@ use std::path::PathBuf;
 
 use freya::prelude::*;
 
-use crate::{assets::cross_icon, core::exif::{self, civitai_request}, ui::{app::{DnDStatus, Exif}, theme::button_transparent, THEME}};
+use crate::{
+    assets::{cross_icon, folder_look_icon}, 
+    core::exif::{self, civitai_request},
+    ui::{app::{DnDStatus, Exif}, 
+        theme::button_transparent, 
+        THEME
+    }
+};
 
 pub fn file_list(
-    selected_file: Signal<Option<PathBuf>>,
+    selected_file: Signal<PathBuf>,
     metadata:      Signal<Exif>,
     files:         Signal<Vec<PathBuf>>,
 
@@ -43,6 +50,8 @@ pub fn file_list(
         } else{{
             let files_read = files.read();
             let files_arr = files_read.clone().into_iter();
+    
+            let hovered = use_signal(|| PathBuf::new());
             rsx!(VirtualScrollView {
                 direction: "vertical",
                 padding: "8",
@@ -61,38 +70,22 @@ pub fn file_list(
                             spacing: "4",
 
                             {file_element(
-                                selected_file, metadata, files, civitai_get, 
+                                selected_file, metadata, files, hovered, civitai_get,
                                 file.clone(), file_name.to_string()
                             )}
                         }
                     )
                 }
             })
-            // rsx!(ScrollView {
-            //     padding: "8",
-            //     direction: "vertical",
-            //     rect{
-            //         direction: "vertical",
-            //         spacing: "4",
-
-            //         for file in files.read().clone(){{
-            //             let file_clone = file.clone();
-            //             let file_name = file_clone.file_name().unwrap().to_str().unwrap();
-            //             {file_element(
-            //                 selected_file, metadata, files, 
-            //                 file, file_name.to_string(), civitai_value, theme_value
-            //             )}
-            //         }}
-            //     }
-            // })
         }}
     })
 }
 
 fn file_element(
-    mut selected_file: Signal<Option<PathBuf>>,
+    mut selected_file: Signal<PathBuf>,
     mut metadata:      Signal<Exif>,
     mut files:         Signal<Vec<PathBuf>>,
+    mut hovered:       Signal<PathBuf>,
     civitai_get: Signal<bool>,
 
     file: PathBuf, 
@@ -100,39 +93,56 @@ fn file_element(
 ) -> Element{
     let civitai_value = *civitai_get.read();
     let theme_value = *THEME.read();
-    
+
     let file_clone = file.clone();
+    let file_show = file.clone();
+    let file_hover = file.clone();
     rsx!(rect{
         direction: "horizontal",
         cross_align: "center",
         width: "fill",
         height: "32",
 
-        Button{
-            onpress: move |_| {
-                let mut selected_file = selected_file.write();
-                if selected_file.is_some() && 
-                file_clone == selected_file.clone().unwrap() {
-                    *selected_file = None;
-                    metadata.set(Exif::None);
+        onmouseenter: move |_| *hovered.write() = file_hover.clone(),
+        onmouseleave: move |_| *hovered.write() = PathBuf::new(),
+
+        if *hovered.read() == file_hover{
+            Button{
+                onpress: move |_| {
+                    let mut selected_file = selected_file.write();
+                    if file_clone == selected_file.clone() {
+                        *selected_file = PathBuf::new();
+                        metadata.set(Exif::None);
+                    }
+                    files.write().retain(|f| *f != file_clone);
+                },
+                svg {
+                    color: if theme_value == 1 {"#cccccc"} else {"#323232"},
+                    width: "28",
+                    height: "28",
+                    svg_data: static_bytes(cross_icon())
                 }
-                files.write().retain(|f| *f != file_clone);
             },
-            svg {
-                color: if theme_value == 1 {"#cccccc"} else {"#323232"},
-                width: "28",
-                height: "28",
-                svg_data: static_bytes(cross_icon())
+            Button{
+                onpress: move |_| {
+                    let _ = open::that(&file_show);
+                },
+                svg {
+                    color: if theme_value == 1 {"#cccccc"} else {"#323232"},
+                    width: "24",
+                    height: "24",
+                    svg_data: static_bytes(folder_look_icon())
+                }
             }
         },
+
         Button{
             theme: Some(button_transparent(
                 if theme_value == 1 {"#3b3938"} else {"#e4e0d9"}
             )),
             onpress: move |_| {
                 let file = file.clone();
-                if selected_file.read().is_some() &&
-                selected_file.read().clone().unwrap() == file{
+                if selected_file.read().clone() == file{
                     return;
                 }
 
@@ -140,7 +150,7 @@ fn file_element(
                     let mut selected_file = selected_file.clone();
                     metadata.set(Exif::Loading);
 
-                    selected_file.set(Some(file.clone()));
+                    selected_file.set(file.clone());
                     metadata.set(match exif::parse_image(&file){
                         Ok(res) => Exif::Ok(if civitai_value{
                             civitai_request(res).await.to_string()
@@ -151,12 +161,18 @@ fn file_element(
             },
             label {
                 width: "fill",
+                margin: "0 0 0 4",
                 max_lines: "1",
 
                 color: if theme_value == 1 {"#cccccc"} else {"#323232"},
                 font_size: "16",
                 font_weight: "bold",
                 text_overflow: "ellipsis",
+
+                decoration: if selected_file.read().clone() == file_hover{
+                    "underline"
+                },
+                decoration_style: "dotted",
                 { file_name }
             }
         }

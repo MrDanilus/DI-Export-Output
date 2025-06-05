@@ -5,12 +5,12 @@ use freya::prelude::*;
 use crate::ui::{app::Exif, theme::button_transparent, THEME};
 
 pub fn preview(
-    mut selected_file: Signal<Option<PathBuf>>,
+    mut selected_file: Signal<PathBuf>,
     mut metadata:      Signal<Exif>
 ) -> Element{
     let theme_value = *THEME.read();
     rsx!({
-        let path = selected_file.read().clone().unwrap();
+        let path = selected_file.read().clone();
         match fs::read(path){
             Ok(file) => {
                 rsx!(
@@ -19,7 +19,7 @@ pub fn preview(
                             if theme_value == 1 {"#3b3938"} else {"#e4e0d9"}
                         )),
                         onpress: move |_| {
-                            selected_file.set(None);
+                            selected_file.set(PathBuf::new());
                             metadata.set(Exif::None);
                         },
                         rect{

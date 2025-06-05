@@ -6,6 +6,10 @@ pub fn civitai_logo() -> &'static [u8] {
 pub fn cross_icon() -> &'static [u8] {
     include_bytes!("icons/cross.svg")
 }
+pub fn folder_look_icon() -> &'static [u8]{
+    include_bytes!("icons/folder-look.svg")
+}
+
 pub fn loading_icon() -> &'static [u8]{
     include_bytes!("icons/loading.svg")
 }
