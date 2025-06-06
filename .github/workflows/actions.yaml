@@ -24,7 +24,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
-      - name: Кэш зависимостей
+      - name: Кэш cargo зависимостей
         uses: actions/cache@v4
         with:
           path: |
@@ -32,9 +32,12 @@ jobs:
             ~/.cargo/git
             target
           key: ${{ matrix.runner }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: Установка зависимостей (Linux)
+      - name: Кэш apt зависимостей (Linux)
         if: matrix.os == 'linux'
-        run: sudo apt install -y build-essential libssl-dev pkg-config cmake libgtk-3-dev libclang-dev
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: build-essential libssl-dev pkg-config cmake libgtk-3-dev libclang-dev
+          version: 1.0
       - name: Сборка бинарного файла
         run: cargo build --release
       - name: Сохранение файла в артифакты
@@ -64,8 +67,12 @@ jobs:
         uses: dante-signal31/rust-app-version@v1.2.0
         with:
           cargo_toml_folder: ./
+      - name: Переименование файлов
+        run: |
+          mv artifacts/sd-image-to-params artifacts/sd-image-to-params_v${{ steps.app_version.outputs.app_version }}_linux_x64 && \
+          mv artifacts/sd-image-to-params.exe artifacts/sd-image-to-params_v${{ steps.app_version.outputs.app_version }}_windows_x64.exe
       - name: Публикация файлов
         run: |
           gh release create "v${{ steps.app_version.outputs.app_version }}" \
-            'artifacts/sd-image-to-params#sd-image-to-params_v${{ steps.app_version.outputs.app_version }}_linux_x64' \
-            'artifacts/sd-image-to-params.exe#sd-image-to-params_v${{ steps.app_version.outputs.app_version }}_windows_x64' 
+            'artifacts/sd-image-to-params_v${{ steps.app_version.outputs.app_version }}_linux_x64' \
+            'artifacts/sd-image-to-params_v${{ steps.app_version.outputs.app_version }}_windows_x64.exe' 

@@ -11,23 +11,24 @@ pub fn check_file(files: Signal<Vec<PathBuf>>, file: Event<FileData>) -> DnDStat
         None => return DnDStatus::Wrong
     };
     if path.is_dir(){
-        let mut correct = false;
+        let mut status = DnDStatus::Wrong;
         for entry in WalkDir::new(path)
         .into_iter().filter_map(|e| e.ok()){
             let path = entry.path().to_path_buf();
             match check_image(&path){
                 true => {
-                    correct = true;
-                    break;
+                    if files.read().contains(&path){
+                        status = DnDStatus::Exists;
+                    } else{
+                        status = DnDStatus::Ok;
+                        break;
+                    }
                 },
                 false => continue
             }
         }
 
-        return match correct{
-            true => DnDStatus::Ok,
-            false => DnDStatus::Wrong
-        }
+        return status
     } else{
         if files.read().contains(path){
             return DnDStatus::Exists;
@@ -76,7 +77,9 @@ pub fn write(
                     let path = entry.path().to_path_buf();
                     match check_image(&path){
                         true => {
-                            files.write().push(path.clone());
+                            if !files.read().contains(&path){
+                                files.write().push(path.clone());
+                            }
                         },
                         false => continue
                     }
@@ -85,7 +88,7 @@ pub fn write(
                 files.write().push(path.clone());
             }
         },
-        DnDStatus::Exists => file_hover.set(DnDStatus::None),
+        DnDStatus::Exists => file_hover.set(DnDStatus::Exists),
         status => file_hover.set(status)
     }
 }
