@@ -30,10 +30,7 @@ panic = "abort"
 before-packaging-command = "cargo build --release"
 product-name = "SD E/O"
 identifier = "com.airfish.sd-extract-output"
-icons = [
-  "icon.png",
-  "icon.ico"
-]
+icons = ["icon.png", "icon.ico"]
 
 [package.metadata.winresource]
 ProductName = "SD E/O"
