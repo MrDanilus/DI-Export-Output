@@ -1,2 +1,5 @@
 /.vscode
 /target
+
+**/*.ai
+/src/assets/colors.png

@@ -2,20 +2,20 @@
 use freya::prelude::*;
 
 mod core;
-use core::config::init_theme;
 mod ui;
 use ui::view;
 mod assets;
 use assets::JETBRAINS_REGULAR;
 
+const ICON: &[u8] = include_bytes!("../icons/icon.png");
+
 fn main() {
-    init_theme();
-    
     launch_cfg(
         view,
         LaunchConfig::<()>::new()
             .with_size(800.0, 800.0)
             .with_title("SD Image 2 Params")
             .with_font("JetBrains Regular", JETBRAINS_REGULAR)
+            .with_icon(LaunchConfig::load_icon(ICON))
     );
 }

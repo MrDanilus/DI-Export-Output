@@ -24,16 +24,6 @@ pub fn resolve_path(file: &str) -> Result<PathBuf, String>{
     return Ok(path.join(format!(".airfish\\sdimg-params\\{file}")));
 }
 
-pub fn init_theme(){
-    match resolve_path(""){
-        Ok(path) => {
-            let _ = fs::create_dir_all(&path);
-            let _ = fs::write(path, b"light");
-        },
-        Err(_) => {}
-    }
-}
-
 pub fn get_theme() -> String{
     match resolve_path("theme.txt"){
         Ok(path) => match fs::read_to_string(&path){

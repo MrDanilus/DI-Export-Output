@@ -17,10 +17,10 @@ jobs:
         include:
           - os: linux
             runner: ubuntu-latest
-            file: sd-image-to-params
+            file: sd-extract-output
           - os: windows
             runner: windows-latest
-            file: sd-image-to-params.exe
+            file: sd-extract-output.exe
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
@@ -43,7 +43,7 @@ jobs:
       - name: Сохранение файла в артифакты
         uses: actions/upload-artifact@v4
         with:
-          name: sd-image-to-params_${{ matrix.os }}
+          name: sd-extract-output_${{ matrix.os }}
           path: target/release/${{ matrix.file }}
 
   publish:
@@ -55,12 +55,12 @@ jobs:
       - name: Загрузка бинарного файла linux из артефактов
         uses: actions/download-artifact@v4
         with:
-          name: sd-image-to-params_linux
+          name: sd-extract-output_linux
           path: artifacts
       - name: Загрузка бинарного файла windows из артефактов
         uses: actions/download-artifact@v4
         with:
-          name: sd-image-to-params_windows
+          name: sd-extract-output_windows
           path: artifacts
       - name: Получение версии приложения из Cargo.toml
         id: app_version
@@ -69,10 +69,10 @@ jobs:
           cargo_toml_folder: ./
       - name: Переименование файлов
         run: |
-          mv artifacts/sd-image-to-params artifacts/sd-image-to-params_v${{ steps.app_version.outputs.app_version }}_linux_x64 && \
-          mv artifacts/sd-image-to-params.exe artifacts/sd-image-to-params_v${{ steps.app_version.outputs.app_version }}_windows_x64.exe
+          mv artifacts/sd-extract-output artifacts/sd-extract-output_v${{ steps.app_version.outputs.app_version }}_linux_x64 && \
+          mv artifacts/sd-extract-output.exe artifacts/sd-extract-output_v${{ steps.app_version.outputs.app_version }}_windows_x64.exe
       - name: Публикация файлов
         run: |
           gh release create "v${{ steps.app_version.outputs.app_version }}" \
-            'artifacts/sd-image-to-params_v${{ steps.app_version.outputs.app_version }}_linux_x64' \
-            'artifacts/sd-image-to-params_v${{ steps.app_version.outputs.app_version }}_windows_x64.exe' 
+            'artifacts/sd-extract-output_v${{ steps.app_version.outputs.app_version }}_linux_x64' \
+            'artifacts/sd-extract-output_v${{ steps.app_version.outputs.app_version }}_windows_x64.exe' 

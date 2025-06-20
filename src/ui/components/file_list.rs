@@ -29,8 +29,8 @@ pub fn file_list(
 
         border: {match *file_hover.read(){
             DnDStatus::Ok => "2 inner rgb(50, 150, 50)",
-            DnDStatus::Wrong => "2 inner rgb(150, 50, 50)",
-            DnDStatus::Exists => "2 inner rgb(150, 150, 50)",
+            DnDStatus::Wrong => "2 inner rgb(175, 50, 50)",
+            DnDStatus::Exists => "2 inner rgb(175, 150, 50)",
             _ => if theme_value == 1 {"2 inner #59554c"} else {"2 inner #d4c9b4"}
         }},
         corner_radius: "16",
@@ -41,8 +41,8 @@ pub fn file_list(
                 text_align: "center",
                 color: {match *file_hover.read(){
                     DnDStatus::Ok => "rgb(50, 150, 50)",
-                    DnDStatus::Wrong => "rgb(150, 50, 50)",
-                    DnDStatus::Exists => "rgb(150, 150, 50)",
+                    DnDStatus::Wrong => "rgb(175, 50, 50)",
+                    DnDStatus::Exists => "rgb(175, 150, 50)",
                     _ => if theme_value == 1 {"#cccccc"} else {"#323232"}
                 }},
                 "Переместите изображения/директорию\nв окно"
