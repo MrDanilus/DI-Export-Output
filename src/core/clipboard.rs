@@ -1,12 +1,18 @@
 use std::{collections::HashMap, path::PathBuf};
 use copypasta::{ClipboardContext, ClipboardProvider};
 
-use crate::core::{civitai::get_by_hash, exif::parse_image, params::Params};
+use crate::core::{civitai::get_by_hash, file::check_image, params::Params, parse::{self, raw}};
 
 pub async fn save_to_clipboard(files: Vec<PathBuf>, civitai_value: bool) -> bool{
     let mut params: Vec<(PathBuf, Option<Params>)> = files.iter()
-        .map(|file| match parse_image(&file){
-            Ok(res) => (file.clone(), Some(res)),
+        .map(|file| match raw::parse(
+            check_image(&file).unwrap().extensions_str().get(0).unwrap(), 
+            &file
+        ){
+            Ok(params) => match parse::extract(params){
+                Ok(res) => (file.clone(), Some(res)),
+                Err(_) => (file.clone(), None)
+            },
             Err(_) => (file.clone(), None)
         }).collect();
 

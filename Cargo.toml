@@ -1,6 +1,6 @@
 [package]
-name = "sd-extract-output"
-version = "1.1.1"
+name = "di-extract-output"
+version = "1.2.0"
 edition = "2024"
 build = "build.rs"
 
@@ -28,9 +28,9 @@ panic = "abort"
 
 [package.metadata.packager]
 before-packaging-command = "cargo build --release"
-product-name = "SD E/O"
-identifier = "com.airfish.sd-extract-output"
+product-name = "DI E/O"
+identifier = "com.airfish.di-extract-output"
 icons = ["icon.png", "icon.ico"]
 
 [package.metadata.winresource]
-ProductName = "SD E/O"
+ProductName = "DI E/O"

@@ -30,6 +30,8 @@ pub fn app() -> Element{
     let civitai_request = use_signal(|| false);
     let metadata = use_signal(|| Exif::None);
 
+    let preview_image: Signal<Vec<u8>> = use_signal(|| Vec::new());
+
     let theme_value = *THEME.read();
 
     rsx!(rect{
@@ -66,7 +68,7 @@ pub fn app() -> Element{
                 
                 {header(civitai_request, selected_file, metadata, files)},
                 
-                {file_list(selected_file, metadata, files, civitai_request, file_hover)}
+                {file_list(selected_file, metadata, files, civitai_request, file_hover, preview_image)}
             },
             rect {
                 height: "fill",
@@ -83,7 +85,7 @@ pub fn app() -> Element{
                 font_size: "20",
 
                 if selected_file.read().is_file(){
-                    {preview(selected_file, metadata)}
+                    {preview(selected_file, metadata, preview_image)}
                 } else if !files.read().is_empty(){ 
                     label { "Выберите изображение" } 
                 }

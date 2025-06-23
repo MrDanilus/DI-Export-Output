@@ -1,4 +1,4 @@
-use std::{fs, path::PathBuf};
+use std::path::PathBuf;
 
 use freya::prelude::*;
 
@@ -6,13 +6,13 @@ use crate::ui::{app::Exif, theme::button_transparent, THEME};
 
 pub fn preview(
     mut selected_file: Signal<PathBuf>,
-    mut metadata:      Signal<Exif>
+    mut metadata:      Signal<Exif>,
+    preview_image:     Signal<Vec<u8>>
 ) -> Element{
     let theme_value = *THEME.read();
     rsx!({
-        let path = selected_file.read().clone();
-        match fs::read(path){
-            Ok(file) => {
+        match preview_image.len() > 0{
+            true => {
                 rsx!(
                     Button{
                         theme: Some(button_transparent(
@@ -34,17 +34,17 @@ pub fn preview(
                                 shadow: if theme_value == 1 {"0 0 16 4 #403c36"} else {"0 0 16 4 #c4b9a6"},
                                 image { 
                                     sampling: "mitchell",
-                                    image_data: dynamic_bytes(file) 
+                                    image_data: dynamic_bytes(preview_image.read().clone())
                                 }
                             }
                         }
                     }
                 )
             },
-            Err(err) => {
+            false => {
                 rsx!( label { 
                     text_align: "center",
-                    {format!("Не удалось загрузить изображение:\n{err}")}
+                    "Не удалось загрузить изображение"
                 } )
             }
         }

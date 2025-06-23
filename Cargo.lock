@@ -870,6 +870,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "di-extract-output"
+version = "1.2.0"
+dependencies = [
+ "copypasta",
+ "freya",
+ "image",
+ "open",
+ "reqwest",
+ "serde_json",
+ "tokio",
+ "walkdir",
+ "winresource",
+]
+
+[[package]]
 name = "dioxus"
 version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3560,21 +3575,6 @@ dependencies = [
  "memmap2",
  "smithay-client-toolkit",
  "tiny-skia",
-]
-
-[[package]]
-name = "sd-extract-output"
-version = "1.1.1"
-dependencies = [
- "copypasta",
- "freya",
- "image",
- "open",
- "reqwest",
- "serde_json",
- "tokio",
- "walkdir",
- "winresource",
 ]
 
 [[package]]

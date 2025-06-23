@@ -1,10 +1,10 @@
-use std::path::PathBuf;
+use std::{fs, path::PathBuf};
 
 use freya::prelude::*;
 
 use crate::{
     assets::{cross_icon, folder_look_icon}, 
-    core::exif::{self, civitai_request},
+    core::{file::check_image, parse::{self, civitai_request, raw}},
     ui::{app::{DnDStatus, Exif}, 
         theme::button_transparent, 
         THEME
@@ -16,8 +16,9 @@ pub fn file_list(
     metadata:      Signal<Exif>,
     files:         Signal<Vec<PathBuf>>,
 
-    civitai_get:       Signal<bool>,
-    file_hover:        Signal<DnDStatus>
+    civitai_get:   Signal<bool>,
+    file_hover:    Signal<DnDStatus>,
+    preview_image: Signal<Vec<u8>>
 ) -> Element{
     let theme_value = *THEME.read();
 
@@ -70,7 +71,7 @@ pub fn file_list(
                             spacing: "4",
 
                             {file_element(
-                                selected_file, metadata, files, hovered, civitai_get,
+                                selected_file, metadata, files, hovered, preview_image, civitai_get,
                                 file.clone(), file_name.to_string()
                             )}
                         }
@@ -86,6 +87,7 @@ fn file_element(
     mut metadata:      Signal<Exif>,
     mut files:         Signal<Vec<PathBuf>>,
     mut hovered:       Signal<PathBuf>,
+    mut preview_image: Signal<Vec<u8>>,
     civitai_get: Signal<bool>,
 
     file: PathBuf, 
@@ -150,12 +152,43 @@ fn file_element(
                     let mut selected_file = selected_file.clone();
                     metadata.set(Exif::Loading);
 
-                    selected_file.set(file.clone());
-                    metadata.set(match exif::parse_image(&file){
-                        Ok(res) => Exif::Ok(if civitai_value{
-                            civitai_request(res).await.to_string()
-                        } else {res.to_string()}),
-                        Err(err) => Exif::Err(err),
+                    let res_params = match check_image(&file){
+                        Some(res) => match raw::parse(
+                            res.extensions_str().get(0).unwrap(), 
+                            &file
+                        ){
+                            Ok(params) => Exif::Ok(params),
+                            Err(err) => Exif::Err(err)
+                        },
+                        None => Exif::Err("Неподдерживаемое изображение".to_string()),
+                    };
+
+                    metadata.set(match res_params{
+                        Exif::Ok(params) => match parse::extract(params){
+                            Ok(res) => {
+                                selected_file.set(file.clone());
+                                spawn(async move{
+                                    // TODO: Optimize image encoding or render in skia
+                                    // Encode image to JPEG
+                                    // let img = ImageReader::open(file.clone()).unwrap()
+                                    //     .decode().unwrap();
+                                    // let mut bytes: Vec<u8> = Vec::new();
+                                    // img.write_to(&mut Cursor::new(&mut bytes), image::ImageFormat::Png)
+                                    //     .unwrap();
+                                    let img = fs::read(file.clone()).unwrap();
+                                    preview_image.set(img);
+                                });
+
+                                Exif::Ok(
+                                    if civitai_value{
+                                        civitai_request(res).await.to_string()
+                                    } else {res.to_string()}
+                                )
+                            },
+                            Err(err) => Exif::Err(err)
+                        },
+                        Exif::Err(err) => Exif::Err(err),
+                        _ => Exif::None
                     });
                 });
             },

@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 use freya::{events::FileData, prelude::{Event, Readable, Signal, Writable}};
-use image::ImageReader;
+use image::{ImageFormat, ImageReader};
 use walkdir::WalkDir;
 
 use crate::ui::app::DnDStatus;
@@ -16,7 +16,7 @@ pub fn check_file(files: Signal<Vec<PathBuf>>, file: Event<FileData>) -> DnDStat
         .into_iter().filter_map(|e| e.ok()){
             let path = entry.path().to_path_buf();
             match check_image(&path){
-                true => {
+                Some(_) => {
                     if files.read().contains(&path){
                         status = DnDStatus::Exists;
                     } else{
@@ -24,7 +24,7 @@ pub fn check_file(files: Signal<Vec<PathBuf>>, file: Event<FileData>) -> DnDStat
                         break;
                     }
                 },
-                false => continue
+                None => continue
             }
         }
 
@@ -34,25 +34,25 @@ pub fn check_file(files: Signal<Vec<PathBuf>>, file: Event<FileData>) -> DnDStat
             return DnDStatus::Exists;
         }
         match check_image(path){
-            true => DnDStatus::Ok,
-            false => DnDStatus::Wrong
+            Some(_) => DnDStatus::Ok,
+            None => DnDStatus::Wrong
         }
     }
 }
 
-fn check_image(path: &PathBuf) -> bool{
+pub fn check_image(path: &PathBuf) -> Option<ImageFormat>{
     return match ImageReader::open(path){
         Ok(img) => match img.with_guessed_format(){
             Ok(img) => {
                 if img.format().is_none(){
-                    false
+                    None
                 } else {
-                    true
+                    Some(img.format().unwrap())
                 }
             },
-            Err(_) => false
+            Err(_) => None
         },
-        Err(_) => false
+        Err(_) => None
     }
 }
 
@@ -76,12 +76,12 @@ pub fn write(
                 .into_iter().filter_map(|e| e.ok()){
                     let path = entry.path().to_path_buf();
                     match check_image(&path){
-                        true => {
+                        Some(_) => {
                             if !files.read().contains(&path){
                                 files.write().push(path.clone());
                             }
                         },
-                        false => continue
+                        None => continue
                     }
                 }
             } else{

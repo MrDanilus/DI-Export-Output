@@ -14,7 +14,7 @@ fn main() {
         view,
         LaunchConfig::<()>::new()
             .with_size(800.0, 800.0)
-            .with_title("SD E/O")
+            .with_title("DI E/O")
             .with_font("JetBrains Regular", JETBRAINS_REGULAR)
             .with_icon(LaunchConfig::load_icon(ICON))
     );

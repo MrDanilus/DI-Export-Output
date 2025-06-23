@@ -1,20 +1,9 @@
-use std::path::PathBuf;
-use std::fs;
-
 use crate::core::{civitai::get_all, params::Params};
 
-pub fn parse_image(path: &PathBuf) -> Result<Params, String>{
-    let mut res = Params::default();
-    let file = fs::read(path).map_err(|e| format!("Ошибка чтения файла: {e}"))?;
+pub mod raw;
 
-    let file_str = String::from_utf8_lossy(&file);
-    let raw_params = file_str.split("parameters").nth(1)
-        .ok_or(format!("Не удалось найти данные"))?;
-    let raw_params = raw_params.split("IDAT").nth(0)
-        .ok_or(format!("Не удалось найти данные"))?;
-    let params = String::from_utf8(clean_text_bytes(raw_params.as_bytes()))
-        .map_err(|e| format!("Ошибка чистки байтов: {e}"))?;
-    
+pub fn extract(params: String) -> Result<Params, String>{
+    let mut res = Params::default();
     // Get prompts
     let params_clone = params.clone();
     let prompts_split = params_clone.split("Steps:").nth(0)

@@ -1,5 +1,3 @@
-/.vscode
+/.*
+!/.github
 /target
-
-**/*.ai
-/src/assets/colors.png
